@@ -311,7 +311,8 @@ void eth_halt(void)
 
 	eth_get_ops(current)->stop(current);
 	priv = current->uclass_priv;
-	priv->state = ETH_STATE_PASSIVE;
+	if (priv)
+		priv->state = ETH_STATE_PASSIVE;
 }
 
 int eth_is_active(struct udevice *dev)
