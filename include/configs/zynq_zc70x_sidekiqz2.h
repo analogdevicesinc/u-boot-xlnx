@@ -92,7 +92,7 @@
 		"fi; " \
 		"envversion;setenv bootargs uio_pdrv_genirq.of_id=generic-uio console=ttyPS0,115200 maxcpus=${maxcpus} " \
 		"rootfstype=ramfs root=/dev/ram0 rw earlyprintk uboot=\"${uboot-version}\" " \
-		"&& bootm ${fit_load_address}#${fit_config} || echo BOOT failed entering DFU mode ... && run dfu_sf \n" \
+		"&& bootm ${fit_load_address}#${fit_config} || echo BOOT failed entering DFU mode ... && run dfu_sf \0" \
 	"qspiboot=adi_hwref; set stdout serial@e0001000; " \
 			"if gpio input 48; then " \
 				"echo DFU pin asserted  && run dfu_sf; " \
@@ -109,7 +109,7 @@
 			"rootfstype=ramfs root=/dev/ram0 rw quiet loglevel=4 uboot=\"${uboot-version}\" && " \
 			"bootm ${fit_load_address}#${fit_config} || set stdout serial@e0001000;echo BOOT failed entering DFU mode ... && run dfu_sf \0" \
 	"jtagboot=env default -a;sf probe && sf protect unlock 0 100000 && run dfu_sf;\0" \
-	"thor_ram=run dfu_ram_info && thordown 0 ram 0\n" \
+	"thor_ram=run dfu_ram_info && thordown 0 ram 0\0" \
 	"uenvboot=" \
 		"if run loadbootenv; then " \
 			"echo Loaded environment from ${bootenv}; " \
