@@ -268,17 +268,57 @@
 				"then env run importbootenv; " \
 			"fi; " \
 		"fi; \0" \
+	"refclk_source=internal\0" \
+	"mode=1r1t\0" \
 	"adi_loadvals=fdt addr ${fit_load_address} && fdt get value fdt_choosen /configurations/${fit_config}/ fdt && " \
 		"fdt get addr fdtaddr /images/${fdt_choosen} data && fdt addr ${fdtaddr}; "\
-		"if test -n ${ad936x_ext_refclk}  && test ! -n ${ad936x_skip_ext_refclk}; then " \
+		"if test -n ${ad936x_ext_refclk} && test ! -n ${ad936x_skip_ext_refclk}; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk}; " \
 		"fi; " \
-		"if test -n ${model}; then " \
-			"fdt set / model ${model}; " \
+		"fdt get value model / model; " \
+		"if test -n ${ad936x_ext_refclk_override} && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
+			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk_override}; " \
+		"fi; " \
+		"if test ${refclk_source} = internal || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+			"fdt rm /amba/gpio@e000a000/clock_extern_en; " \
 		"fi; " \
 		"if test -n ${attr_name} && test -n ${attr_val}; then " \
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
-		"fi \0" \
+                "fi; " \
+		"if test ${refclk_source} = external || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+			"fdt rm /amba/gpio@e000a000/clock_internal_en; " \
+		"fi; " \
+		"if test -n ${compatible} && test ! ${compatible} = ad9361 && test ! ${compatible} = ad9363a && test ! ${compatible} = ad9364; then " \
+			"setenv compatible ad9363a; " \
+			"saveenv; " \
+		"fi; " \
+		"if test -n ${mode} && test ! ${mode} = 1r1t && test ! ${mode} = 2r2t; then " \
+			"setenv mode 1r1t; " \
+			"saveenv; " \
+		"fi; " \
+		"if test -n ${refclk_source} && test ! ${refclk_source} = internal && test ! ${refclk_source} = external; then " \
+			"setenv refclk_source internal; " \
+			"saveenv; " \
+		"fi; " \
+		"if test -n ${compatible}; then " \
+			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ${compatible}; " \
+		"fi; " \
+		"if test  ${compatible} = ad9361 && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ad9363a; " \
+			"compatible=ad9363a; " \
+		"fi; " \
+		"if test ${mode} = 1r1t || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
+			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+		"fi; " \
+		"if test -n ${cs_gpio}; then " \
+			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
+		"fi; " \
+		"if test ${compatible} = ad9364 || test -n ${attr_val} = ad9364; then " \
+			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
+			"setenv mode 1r1t; " \
+			"saveenv; " \
+		"fi; \0" \
 	"qspiboot_extraenv=sf read ${extraenv_load_address} 0xFF000 0x1000 && " \
 		"env import -c ${extraenv_load_address} 0x1000 || true \0" \
 	"read_sf=sf probe 0:0 50000000 0 && run qspiboot_extraenv &&" \
