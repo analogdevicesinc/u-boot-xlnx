@@ -140,6 +140,7 @@ dtb-$(CONFIG_ARCH_ZYNQ) += \
 	zynq-cse-qspi-x1-stacked.dtb \
 	zynq-cse-qspi-x2-single.dtb \
 	zynq-cse-qspi-x2-stacked.dtb \
+	zynq-coraz7s.dtb \
 	zynq-microzed.dtb \
 	zynq-picozed.dtb \
 	zynq-syzygy-hub.dtb \
