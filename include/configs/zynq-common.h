@@ -313,11 +313,13 @@
 		"if test -n ${cs_gpio}; then " \
 			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
-		"if test ${compatible} = ad9364 || test -n ${attr_val} = ad9364; then " \
-			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+		"if test -n ${compatible} = ad9364 || test -n ${attr_val} = ad9364; then " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
-			"setenv mode 1r1t; " \
-			"saveenv; " \
+			"if test ! ${mode} = 1r1t; then " \
+				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+				"setenv mode 1r1t; " \
+				"saveenv; " \
+			"fi; " \
 		"fi; \0" \
 	"qspiboot_extraenv=sf read ${extraenv_load_address} 0xFF000 0x1000 && " \
 		"env import -c ${extraenv_load_address} 0x1000 || true \0" \
