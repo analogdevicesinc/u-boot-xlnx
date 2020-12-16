@@ -270,12 +270,9 @@
 		"fi; \0" \
 	"refclk_source=internal\0" \
 	"mode=1r1t\0" \
-	"adi_loadvals=fdt addr ${fit_load_address} && fdt get value fdt_choosen /configurations/${fit_config}/ fdt && " \
-		"fdt get addr fdtaddr /images/${fdt_choosen} data && fdt addr ${fdtaddr}; "\
-		"if test -n ${ad936x_ext_refclk} && test ! -n ${ad936x_skip_ext_refclk}; then " \
+	"adi_loadvals_pluto=if test -n ${ad936x_ext_refclk} && test ! -n ${ad936x_skip_ext_refclk}; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk}; " \
 		"fi; " \
-		"fdt get value model / model; " \
 		"if test -n ${ad936x_ext_refclk_override} && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk_override}; " \
 		"fi; " \
@@ -321,6 +318,12 @@
 				"setenv mode 1r1t; " \
 				"saveenv; " \
 			"fi; " \
+		"fi; \0" \
+	"adi_loadvals=fdt addr ${fit_load_address} && fdt get value fdt_choosen /configurations/${fit_config}/ fdt && " \
+		"fdt get addr fdtaddr /images/${fdt_choosen} data && fdt addr ${fdtaddr}; "\
+		"fdt get value model / model; " \
+		"if test \"${model}\" \> \"Analog Devices Pluto\"; then " \
+			"run adi_loadvals_pluto; " \
 		"fi; \0" \
 	"qspiboot_extraenv=sf read ${extraenv_load_address} 0xFF000 0x1000 && " \
 		"env import -c ${extraenv_load_address} 0x1000 || true \0" \
