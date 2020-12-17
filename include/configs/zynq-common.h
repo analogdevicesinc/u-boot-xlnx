@@ -311,7 +311,7 @@
 		"if test -n ${cs_gpio}; then " \
 			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
-		"if test -n ${compatible} = ad9364 || test -n ${attr_val} = ad9364; then " \
+		"if test \"${compatible}\" = ad9364 || test \"${attr_val}\" = ad9364; then " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 			"if test ! ${mode} = 1r1t; then " \
 				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
