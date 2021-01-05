@@ -276,13 +276,13 @@
 		"if test -n ${ad936x_ext_refclk_override} && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk_override}; " \
 		"fi; " \
-		"if test ${refclk_source} = internal || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+		"if test ${refclk_source} = internal && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_extern_en; " \
 		"fi; " \
 		"if test -n ${attr_name} && test -n ${attr_val}; then " \
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
                 "fi; " \
-		"if test ${refclk_source} = external || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+		"if test ${refclk_source} = external && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_internal_en; " \
 		"fi; " \
 		"if test -n ${compatible} && test ! ${compatible} = ad9361 && test ! ${compatible} = ad9363a && test ! ${compatible} = ad9364; then " \
@@ -302,9 +302,10 @@
 		"fi; " \
 		"if test  ${compatible} = ad9361 && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ad9363a; " \
-			"compatible=ad9363a; " \
+			"setenv compatible ad9363a; " \
+			"saveenv; " \
 		"fi; " \
-		"if test ${mode} = 1r1t || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
+		"if test ${mode} = 1r1t && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 		"fi; " \
