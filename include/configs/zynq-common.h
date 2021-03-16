@@ -283,12 +283,16 @@
 		"if test \"${refclk_source}\" = \"internal\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_extern_en; " \
 		"fi; " \
-		"if test -n \"${attr_name}\" && test -n \"${attr_val}\"; then " \
-			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
-                "fi; " \
 		"if test \"${refclk_source}\" = \"external\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_internal_en; " \
 		"fi; " \
+		"if test  \"${attr_val}\" = \"ad9361\" && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+			"setenv attr_val ad9363a; " \
+			"saveenv; " \
+		"fi; " \
+		"if test -n \"${attr_name}\" && test -n \"${attr_val}\"; then " \
+			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
+                "fi; " \
 		"if test -n \"${compatible}\" && test ! \"${compatible}\" = \"ad9361\" && test ! \"${compatible}\" = \"ad9363a\" && test ! \"${compatible}\" = \"ad9364\"; then " \
 			"setenv compatible ad9363a; " \
 			"saveenv; " \
