@@ -270,51 +270,51 @@
 		"fi; \0" \
 	"refclk_source=internal\0" \
 	"mode=1r1t\0" \
-	"adi_loadvals_pluto=if test -n ${ad936x_ext_refclk} && test ! -n ${ad936x_skip_ext_refclk}; then " \
+	"adi_loadvals_pluto=if test -n \"${ad936x_ext_refclk}\" && test ! -n \"${ad936x_skip_ext_refclk}\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk}; " \
 		"fi; " \
-		"if test -n ${ad936x_ext_refclk_override} && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
+		"if test -n \"${ad936x_ext_refclk_override}\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk_override}; " \
 		"fi; " \
-		"if test ${refclk_source} = internal && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+		"if test \"${refclk_source}\" = \"internal\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_extern_en; " \
 		"fi; " \
-		"if test -n ${attr_name} && test -n ${attr_val}; then " \
+		"if test -n \"${attr_name}\" && test -n \"${attr_val}\"; then " \
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
                 "fi; " \
-		"if test ${refclk_source} = external && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+		"if test \"${refclk_source}\" = \"external\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_internal_en; " \
 		"fi; " \
-		"if test -n ${compatible} && test ! ${compatible} = ad9361 && test ! ${compatible} = ad9363a && test ! ${compatible} = ad9364; then " \
+		"if test -n \"${compatible}\" && test ! \"${compatible}\" = \"ad9361\" && test ! \"${compatible}\" = \"ad9363a\" && test ! \"${compatible}\" = \"ad9364\"; then " \
 			"setenv compatible ad9363a; " \
 			"saveenv; " \
 		"fi; " \
-		"if test -n ${mode} && test ! ${mode} = 1r1t && test ! ${mode} = 2r2t; then " \
+		"if test -n \"${mode}\" && test ! \"${mode}\" = \"1r1t\" && test ! \"${mode}\" = \"2r2t\"; then " \
 			"setenv mode 1r1t; " \
 			"saveenv; " \
 		"fi; " \
-		"if test -n ${refclk_source} && test ! ${refclk_source} = internal && test ! ${refclk_source} = external; then " \
+		"if test -n \"${refclk_source}\" && test ! \"${refclk_source}\" = \"internal\" && test ! \"${refclk_source}\" = \"external\"; then " \
 			"setenv refclk_source internal; " \
 			"saveenv; " \
 		"fi; " \
-		"if test -n ${compatible}; then " \
+		"if test -n \"${compatible}\"; then " \
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ${compatible}; " \
 		"fi; " \
-		"if test  ${compatible} = ad9361 && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
+		"if test \"${compatible}\" = \"ad9361\" && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ad9363a; " \
 			"setenv compatible ad9363a; " \
 			"saveenv; " \
 		"fi; " \
-		"if test ${mode} = 1r1t && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
+		"if test \"${mode}\" = \"1r1t\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 		"fi; " \
-		"if test -n ${cs_gpio}; then " \
+		"if test -n \"${cs_gpio}\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
-		"if test \"${compatible}\" = ad9364 || test \"${attr_val}\" = ad9364; then " \
+		"if test \"${compatible}\" = \"ad9364\" || test \"${attr_val}\" = \"ad9364\"; then " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
-			"if test ! ${mode} = 1r1t; then " \
+			"if test ! \"${mode}\" = \"1r1t\"; then " \
 				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
 				"setenv mode 1r1t; " \
 				"saveenv; " \
