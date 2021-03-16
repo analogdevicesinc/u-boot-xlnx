@@ -273,8 +273,12 @@
 	"adi_loadvals_pluto=if test -n \"${ad936x_ext_refclk}\" && test ! -n \"${ad936x_skip_ext_refclk}\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk}; " \
 		"fi; " \
-		"if test -n \"${ad936x_ext_refclk_override}\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
+		"if test -n \"${ad936x_ext_refclk_override}\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk_override}; " \
+		"fi; " \
+		"if test -n \"${refclk_source}\" && test ! \"${refclk_source}\" = \"internal\" && test ! \"${refclk_source}\" = \"external\"; then " \
+			"setenv refclk_source internal; " \
+			"saveenv; " \
 		"fi; " \
 		"if test \"${refclk_source}\" = \"internal\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_extern_en; " \
@@ -291,10 +295,6 @@
 		"fi; " \
 		"if test -n \"${mode}\" && test ! \"${mode}\" = \"1r1t\" && test ! \"${mode}\" = \"2r2t\"; then " \
 			"setenv mode 1r1t; " \
-			"saveenv; " \
-		"fi; " \
-		"if test -n \"${refclk_source}\" && test ! \"${refclk_source}\" = \"internal\" && test ! \"${refclk_source}\" = \"external\"; then " \
-			"setenv refclk_source internal; " \
 			"saveenv; " \
 		"fi; " \
 		"if test -n \"${compatible}\"; then " \
