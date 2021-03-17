@@ -290,25 +290,17 @@
 			"setenv attr_val ad9363a; " \
 			"saveenv; " \
 		"fi; " \
-		"if test -n \"${attr_name}\" && test -n \"${attr_val}\"; then " \
-			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
-                "fi; " \
-		"if test -n \"${compatible}\" && test ! \"${compatible}\" = \"ad9361\" && test ! \"${compatible}\" = \"ad9363a\" && test ! \"${compatible}\" = \"ad9364\"; then " \
-			"setenv compatible ad9363a; " \
+		"if test -n \"${attr_val}\" && test ! \"${attr_val}\" = \"ad9361\" && test ! \"${attr_val}\" = \"ad9363a\" && test ! \"${attr_val}\" = \"ad9364\"; then " \
+			"setenv attr_val ad9363a; " \
 			"saveenv; " \
 		"fi; " \
 		"if test -n \"${mode}\" && test ! \"${mode}\" = \"1r1t\" && test ! \"${mode}\" = \"2r2t\"; then " \
 			"setenv mode 1r1t; " \
 			"saveenv; " \
 		"fi; " \
-		"if test -n \"${compatible}\"; then " \
-			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ${compatible}; " \
-		"fi; " \
-		"if test \"${compatible}\" = \"ad9361\" && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
-			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ad9363a; " \
-			"setenv compatible ad9363a; " \
-			"saveenv; " \
-		"fi; " \
+		"if test -n \"${attr_name}\" && test -n \"${attr_val}\"; then " \
+			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
+                "fi; " \
 		"if test \"${mode}\" = \"1r1t\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
@@ -316,7 +308,7 @@
 		"if test -n \"${cs_gpio}\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
-		"if test \"${compatible}\" = \"ad9364\" || test \"${attr_val}\" = \"ad9364\"; then " \
+		"if test -n \"${attr_val}\" && test \"${attr_val}\" = \"ad9364\"; then " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 			"if test ! \"${mode}\" = \"1r1t\"; then " \
 				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
