@@ -1,0 +1,354 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Analog Devices, Inc. Pluto NG
+ *
+ * hdl_project: <pluto_ng>
+ * board_revision: <>
+ *
+ * Copyright (C) 2021 Analog Devices Inc.
+ */
+
+/dts-v1/;
+
+#include "zynqmp.dtsi"
+#include "zynqmp-clk-ccf.dtsi"
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/pinctrl-zynqmp.h>
+#include <dt-bindings/phy/phy.h>
+
+/ {
+	model = "Analog Devices, Inc. Pluto NG";
+	compatible = "xlnx,zynqmp";
+
+	aliases {
+		ethernet0 = &gem3;
+		mmc0 = &sdhci1;
+		rtc0 = &rtc;
+		serial0 = &uart1;
+		i2c0 = &i2c1;
+		spi0 = &spi0;
+	};
+
+	chosen {
+		bootargs = "earlycon";
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x0 0x0 0x80000000>;
+	};
+};
+
+&pinctrl0 {
+	status = "okay";
+
+	pinctrl_uart1_default: uart1-default {
+		mux {
+			groups = "uart1_4_grp";
+			function = "uart1";
+		};
+
+		conf {
+			groups = "uart1_4_grp";
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+		};
+
+		conf-rx {
+			pins = "MIO17";
+			bias-high-impedance;
+		};
+
+		conf-tx {
+			pins = "MIO16";
+			bias-disable;
+		};
+	};
+
+	pinctrl_gem3_default: gem3-default {
+		mux {
+			function = "ethernet3";
+			groups = "ethernet3_0_grp";
+		};
+
+		conf {
+			groups = "ethernet3_0_grp";
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+		};
+
+		conf-rx {
+			pins = "MIO70", "MIO71", "MIO72",
+				"MIO73", "MIO74", "MIO75";
+			bias-high-impedance;
+			low-power-disable;
+		};
+
+		conf-tx {
+			pins = "MIO64", "MIO65", "MIO66",
+				"MIO67", "MIO68", "MIO69";
+			bias-disable;
+			low-power-enable;
+		};
+
+		mux-mdio {
+			function = "mdio3";
+			groups = "mdio3_0_grp";
+		};
+
+		conf-mdio {
+			groups = "mdio3_0_grp";
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+			bias-disable;
+		};
+	};
+
+	pinctrl_sdhci1_default: sdhci1-default {
+		mux {
+			groups = "sdio1_0_grp";
+			function = "sdio1";
+		};
+
+		conf {
+			groups = "sdio1_0_grp";
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+			bias-disable;
+		};
+
+		mux-cd {
+			groups = "sdio1_cd_0_grp";
+			function = "sdio1_cd";
+		};
+
+		conf-cd {
+			groups = "sdio1_cd_0_grp";
+			bias-high-impedance;
+			bias-pull-up;
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+		};
+
+		mux-wp {
+			groups = "sdio1_wp_0_grp";
+			function = "sdio1_wp";
+		};
+
+		conf-wp {
+			groups = "sdio1_wp_0_grp";
+			bias-high-impedance;
+			bias-pull-up;
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+		};
+	};
+
+	pinctrl_i2c1_default: i2c1-default {
+		mux {
+			groups = "i2c1_8_grp";
+			function = "i2c1";
+		};
+
+		conf {
+			groups = "i2c1_8_grp";
+			bias-pull-up;
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+		};
+	};
+
+	pinctrl_usb0_default: usb0-default {
+		mux {
+			groups = "usb0_0_grp";
+			function = "usb0";
+		};
+
+		conf {
+			groups = "usb0_0_grp";
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+		};
+
+		conf-rx {
+			pins = "MIO52", "MIO53", "MIO55";
+			bias-high-impedance;
+		};
+
+		conf-tx {
+			pins = "MIO54", "MIO56", "MIO57", "MIO58", "MIO59",
+			"MIO60", "MIO61", "MIO62", "MIO63";
+			bias-disable;
+		};
+	};
+};
+
+&uart1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1_default>;
+};
+
+&gem3 {
+	status = "okay";
+	phy-handle = <&phy0>;
+	phy-mode = "rgmii-id";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gem3_default>;
+
+	phy0: phy@f {
+		reg = <0xf>;
+	};
+};
+
+&sdhci1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_sdhci1_default>;
+	xlnx,mio_bank = <1>;
+	no-1-8-v;
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <400000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c1_default>;
+};
+
+&sata {
+	status = "okay";
+	ceva,p0-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
+	ceva,p0-comwake-params = /bits/ 8 <0x06 0x14 0x08 0x0E>;
+	ceva,p0-burst-params = /bits/ 8 <0x13 0x08 0x4A 0x06>;
+	ceva,p0-retry-params = /bits/ 16 <0x96A4 0x3FFC>;
+	ceva,p1-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
+	ceva,p1-comwake-params = /bits/ 8 <0x06 0x14 0x08 0x0E>;
+	ceva,p1-burst-params = /bits/ 8 <0x13 0x08 0x4A 0x06>;
+	ceva,p1-retry-params = /bits/ 16 <0x96A4 0x3FFC>;
+	phy-names = "sata-phy";
+	phys = <&lane3 PHY_TYPE_SATA 1 2 150000000>;
+};
+
+&usb0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usb0_default>;
+};
+
+&dwc3_0 {
+	status = "okay";
+	dr_mode = "otg";
+	phy-names = "usb3-phy";
+	phys = <&lane0 PHY_TYPE_USB3 0 0 26000000>;
+	maximum-speed = "super-speed";
+};
+
+&gpio {
+	status = "okay";
+
+	ad9542_reset {
+		gpio-hog;
+		gpios = <24 0>;
+		output-low;
+		line-name = "ad9542-reset";
+	};
+
+	adrv_reset {
+		gpio-hog;
+		gpios = <81 0>;
+		output-low;
+		line-name = "arv-reset";
+	};
+
+	usb_reset {
+		gpio-hog;
+		gpios = <13 0>;
+		output-high;
+		line-name = "usb-reset";
+	};
+
+	adrv9002_clksrc {
+		gpio-hog;
+		gpios = <79 0>;
+		output-high;
+		line-name = "adrv9002-clksrc";
+	};
+
+	rf_rx1a_mux_ctl {
+		gpio-hog;
+		gpios = <86 0>;
+		output-high;
+		line-name = "rf_rx1a_mux_ctl";
+	};
+	rf_rx1b_mux_ctl {
+		gpio-hog;
+		gpios = <87 0>;
+		output-high;
+		line-name = "rf_rx1b_mux_ctl";
+	};
+	rf_rx2a_mux_ctl {
+		gpio-hog;
+		gpios = <88 0>;
+		output-high;
+		line-name = "rf_rx2a_mux_ctl";
+	};
+	rf_rx2b_mux_ctl {
+		gpio-hog;
+		gpios = <89 0>;
+		output-high;
+		line-name = "rf_rx2b_mux_ctl";
+	};
+	rf_tx1_mux_ctl1 {
+		gpio-hog;
+		gpios = <90 0>;
+		output-high;
+		line-name = "rf_tx1_mux_ctl1";
+	};
+	rf_tx1_mux_ctl2 {
+		gpio-hog;
+		gpios = <91 0>;
+		output-low;
+		line-name = "rf_tx1_mux_ctl2";
+	};
+	rf_tx2_mux_ctl1 {
+		gpio-hog;
+		gpios = <92 0>;
+		output-low;
+		line-name = "rf_tx2_mux_ctl1";
+	};
+	rf_tx2_mux_ctl2 {
+		gpio-hog;
+		gpios = <93 0>;
+		output-low;
+		line-name = "rf_tx2_mux_ctl2";
+	};
+};
+
+&spi0 {
+	status = "okay";
+};
+
+&watchdog0 {
+	status = "okay";
+};
+
+&xilinx_ams {
+	status = "okay";
+};
+
+&ams_ps {
+	status = "okay";
+};
+
+&ams_pl {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+};
+
