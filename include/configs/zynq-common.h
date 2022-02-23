@@ -281,10 +281,10 @@
 			"saveenv; " \
 		"fi; " \
 		"if test \"${refclk_source}\" = \"internal\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
-			"fdt rm /amba/gpio@e000a000/clock_extern_en; " \
+			"fdt rm /amba/gpio@e000a000/clock_extern_en || fdt rm /axi/gpio@e000a000/clock_extern_en; " \
 		"fi; " \
 		"if test \"${refclk_source}\" = \"external\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
-			"fdt rm /amba/gpio@e000a000/clock_internal_en; " \
+			"fdt rm /amba/gpio@e000a000/clock_internal_en || fdt rm /axi/gpio@e000a000/clock_internal_en; " \
 		"fi; " \
 		"if test  \"${attr_val}\" = \"ad9361\" && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"setenv attr_val ad9363a; " \
@@ -299,19 +299,19 @@
 			"saveenv; " \
 		"fi; " \
 		"if test -n \"${attr_name}\" && test -n \"${attr_val}\"; then " \
-			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
+			"fdt set /amba/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val} || fdt set /axi/spi@e0006000/ad9361-phy@0 ${attr_name} ${attr_val}; " \
                 "fi; " \
 		"if test \"${mode}\" = \"1r1t\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
-			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable || fdt rm /axi/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 		"fi; " \
 		"if test -n \"${cs_gpio}\" && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
-			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
+			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\" || fdt set /axi/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
 		"if test -n \"${attr_val}\" && test \"${attr_val}\" = \"ad9364\"; then " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 			"if test ! \"${mode}\" = \"1r1t\"; then " \
-				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable || fdt rm /axi/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
 				"setenv mode 1r1t; " \
 				"saveenv; " \
 			"fi; " \
@@ -333,14 +333,14 @@
 		"if run adi_loadvals; then " \
 		"echo Loaded AD936x refclk frequency and model into devicetree; " \
 		"fi; " \
-		"envversion;setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} rootfstype=ramfs root=/dev/ram0 rw earlyprintk uboot=\"${uboot-version}\" && " \
+		"envversion;setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} rootfstype=ramfs root=/dev/ram0 rw earlyprintk clk_ignore_unused uboot=\"${uboot-version}\" && " \
 		"bootm ${fit_load_address}#${fit_config}\0" \
 	"qspiboot_verbose=adi_hwref;echo Copying Linux from QSPI flash to RAM... && " \
 		"run read_sf && " \
 		"if run adi_loadvals; then " \
 		"echo Loaded AD936x refclk frequency and model into devicetree; " \
 		"fi; " \
-		"envversion;setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} rootfstype=ramfs root=/dev/ram0 rw earlyprintk uboot=\"${uboot-version}\" && " \
+		"envversion;setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} rootfstype=ramfs root=/dev/ram0 rw earlyprintk clk_ignore_unused uboot=\"${uboot-version}\" && " \
 		"bootm ${fit_load_address}#${fit_config} || echo BOOT failed entering DFU mode ... && run dfu_sf \0" \
 	"qspiboot=set stdout nulldev;adi_hwref;test -n $PlutoRevA || gpio input 14 && set stdout serial@e0001000 && sf probe && sf protect lock 0 100000 && run dfu_sf;  " \
 		"set stdout serial@e0001000;" \
@@ -350,7 +350,7 @@
 		"itest *f8000258 == 480002 && run clear_reset_cause && exit; " \
 		"echo Booting silently && set stdout nulldev; " \
 		"run read_sf && run adi_loadvals; " \
-		"envversion;setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} rootfstype=ramfs root=/dev/ram0 rw quiet loglevel=4 uboot=\"${uboot-version}\" && " \
+		"envversion;setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} rootfstype=ramfs root=/dev/ram0 rw quiet loglevel=4 clk_ignore_unused uboot=\"${uboot-version}\" && " \
 		"bootm ${fit_load_address}#${fit_config} || set stdout serial@e0001000;echo BOOT failed entering DFU mode ... && sf protect lock 0 100000 && run dfu_sf \0" \
 	"jtagboot=env default -a;sf probe && sf protect unlock 0 100000 && run dfu_sf; \0" \
 	"uenvboot=" \
