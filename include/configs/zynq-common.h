@@ -251,7 +251,7 @@
 	"loadbootenv_addr=0x2000000\0" \
 	"fit_size=0x900000\0"	\
 	"devicetree_size=0x20000\0"	\
-	"ramdisk_size=0x4000 00\0"	\
+	"ramdisk_size=0x400000\0"	\
 	"bitstream_size=0x400000\0" \
 	"boot_size=0xF00000\0"	\
 	"fdt_high=0x20000000\0"	\
@@ -270,12 +270,9 @@
 		"fi; \0" \
 	"refclk_source=internal\0" \
 	"mode=1r1t\0" \
-	"adi_loadvals=fdt addr ${fit_load_address} && fdt get value fdt_choosen /configurations/${fit_config}/ fdt && " \
-		"fdt get addr fdtaddr /images/${fdt_choosen} data && fdt addr ${fdtaddr}; "\
-		"if test -n ${ad936x_ext_refclk} && test ! -n ${ad936x_skip_ext_refclk}; then " \
+	"adi_loadvals_pluto=if test -n ${ad936x_ext_refclk} && test ! -n ${ad936x_skip_ext_refclk}; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk}; " \
 		"fi; " \
-		"fdt get value model / model; " \
 		"if test -n ${ad936x_ext_refclk_override} && test \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt set /clocks/clock@0 clock-frequency ${ad936x_ext_refclk_override}; " \
 		"fi; " \
@@ -288,8 +285,8 @@
 		"if test ${refclk_source} = external || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
 			"fdt rm /amba/gpio@e000a000/clock_internal_en; " \
 		"fi; " \
-		"if test -n ${compatible} && test ! ${compatible} = ad9361 && test ! ${compatible} = ad9364 && test ! ${compatible} = ad9364; then " \
-			"setenv compatible ad9364; " \
+		"if test -n ${compatible} && test ! ${compatible} = ad9361 && test ! ${compatible} = ad9363a && test ! ${compatible} = ad9364; then " \
+			"setenv compatible ad9363a; " \
 			"saveenv; " \
 		"fi; " \
 		"if test -n ${mode} && test ! ${mode} = 1r1t && test ! ${mode} = 2r2t; then " \
@@ -304,20 +301,29 @@
 			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ${compatible}; " \
 		"fi; " \
 		"if test  ${compatible} = ad9361 && test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\" ; then " \
-			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ad9364; " \
-			"compatible=ad9364; " \
+			"fdt set /amba/spi@e0006000/ad9361-phy@0 compatible ad9363a; " \
+			"compatible=ad9363a; " \
 		"fi; " \
 		"if test ${mode} = 1r1t || test ! \"${model}\" = \"Analog Devices PlutoSDR Rev.C (Z7010/AD9363)\"; then " \
 			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
 		"fi; " \
 		"if test -n ${cs_gpio}; then " \
 			"fdt set /amba/axi_quad_spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
-		"if test ${compatible} = ad9364 || test -n ${attr_val} = ad9364; then " \
-			"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+		"if test \"${compatible}\" = ad9364 || test \"${attr_val}\" = ad9364; then " \
 			"fdt set /fpga-axi/cf-ad9361-dds-core-lpc@79024000 compatible adi,axi-ad9364-dds-6.00.a; " \
-			"setenv mode 1r1t; " \
-			"saveenv; " \
+			"if test ! ${mode} = 1r1t; then " \
+				"fdt rm /amba/spi@e0006000/ad9361-phy@0 adi,2rx-2tx-mode-enable; " \
+				"setenv mode 1r1t; " \
+				"saveenv; " \
+			"fi; " \
+		"fi; \0" \
+	"adi_loadvals=fdt addr ${fit_load_address} && fdt get value fdt_choosen /configurations/${fit_config}/ fdt && " \
+		"fdt get addr fdtaddr /images/${fdt_choosen} data && fdt addr ${fdtaddr}; "\
+		"fdt get value model / model; " \
+		"if test \"${model}\" \> \"Analog Devices Pluto\"; then " \
+			"run adi_loadvals_pluto; " \
 		"fi; \0" \
 	"qspiboot_extraenv=sf read ${extraenv_load_address} 0xFF000 0x1000 && " \
 		"env import -c ${extraenv_load_address} 0x1000 || true \0" \
@@ -359,14 +365,6 @@
 			"echo Running uenvcmd ...; " \
 			"run uenvcmd; " \
 		"fi\0" \
-	"sdboot=if mmcinfo; then " \
-			"run uenvboot; " \
-			"echo Copying Linux from SD to RAM... && " \
-			"load mmc 0 ${fit_load_address} ${kernel_image} && " \
-			"load mmc 0 ${devicetree_load_address} ${devicetree_image} && " \
-			"load mmc 0 ${ramdisk_load_address} ${ramdisk_image} && " \
-			"bootm ${fit_load_address} ${ramdisk_load_address} ${devicetree_load_address}; " \
-		"fi\0" \
 	"usbboot=if usb start; then " \
 			"run uenvboot; " \
 			"echo Copying Linux from USB to RAM... && " \
@@ -378,7 +376,6 @@
 	DFU_ALT_INFO \
 	DFU_ALT_INFO_SF1
 	#endif
-
 /* default boot is according to the bootmode switch settings */
 #if defined(CONFIG_CMD_ZYNQ_RSA)
 #define CONFIG_BOOTCOMMAND		"run rsa_$modeboot"
@@ -573,3 +570,4 @@
 #define CONFIG_SYS_UBOOT_START	CONFIG_SYS_TEXT_BASE
 
 #endif /* __CONFIG_ZYNQ_COMMON_H */
+
