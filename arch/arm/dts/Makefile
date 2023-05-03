@@ -416,7 +416,8 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-zc1751-xm017-dc3.dtb		\
 	zynqmp-zc1751-xm018-dc4.dtb		\
 	zynqmp-zc1751-xm019-dc5.dtb		\
-	zynqmp-jupiter-sdr.dtb
+	zynqmp-jupiter-sdr.dtb			\
+	zynqmp-kv260.dtb
 dtb-$(CONFIG_ARCH_VERSAL) += \
 	versal-mini.dtb \
 	versal-mini-emmc0.dtb \
