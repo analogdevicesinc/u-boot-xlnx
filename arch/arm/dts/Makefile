@@ -382,6 +382,7 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-smk-k24-revA.dtb			\
 	zynqmp-sm-k26-revA.dtb			\
 	zynqmp-smk-k26-revA.dtb			\
+	zynqmp-smk-k26-revA-wrapper.dtb		\
 	zynqmp-sck-kr-g-revA.dtbo		\
 	zynqmp-sck-kd-g-revA.dtbo		\
 	zynqmp-sck-kr-g-revB.dtbo		\

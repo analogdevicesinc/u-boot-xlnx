@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Kria SOM
+ *
+ */
+#include "zynqmp-smk-k26-revA.dts"
+&sdhci1 {
+	status = "okay";
+};
