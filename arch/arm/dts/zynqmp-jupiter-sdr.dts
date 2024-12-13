@@ -359,6 +359,26 @@
 #endif
 };
 
+&qspi {
+	status = "okay";
+	is-dual = <1>;
+	num-cs = <2>;
+	primary_flash: mt25qu@0 {
+        compatible = "n25q512a", "jedec,spi-nor"; /* m32MB */
+        #address-cells = <1>;
+        #size-cells = <1>;
+	reg = <0>, <1>;
+	parallel-memories = /bits/ 64 <0x4000000 0x4000000>; /* 64MB */
+        spi-tx-bus-width = <4>;
+        spi-rx-bus-width = <4>;
+        spi-max-frequency = <40000000>; /* 40MHz */
+        partition@0 {
+            label = "qspi_partition";
+            reg = <0x0 0xD00000>;
+        };
+	};
+};
+
 &gpio {
 	status = "okay";
 
