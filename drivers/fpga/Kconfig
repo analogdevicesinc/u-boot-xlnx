@@ -103,6 +103,15 @@ config FPGA_ZYNQPL
 	  Enable FPGA driver for loading bitstream in BIT and BIN format
 	  on Xilinx Zynq devices.
 
+config FPGA_ADI_SELMAP
+	bool "Enable External FPGA SelectMap driver"
+	depends on FPGA_XILINX
+	select MISC
+	select DM_GPIO
+	help
+	  Enable adi-selmap driver for loading files in BIN format
+	  on External FPGA device using SelectMap.
+
 config SYS_FPGA_CHECK_CTRLC
 	bool "Allow Control-C to interrupt FPGA configuration"
 	depends on FPGA

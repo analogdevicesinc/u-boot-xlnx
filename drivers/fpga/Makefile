@@ -13,6 +13,7 @@ obj-$(CONFIG_FPGA_VERSALPL) += versalpl.o
 obj-$(CONFIG_FPGA_VIRTEX2) += virtex2.o
 obj-$(CONFIG_FPGA_ZYNQPL) += zynqpl.o
 obj-$(CONFIG_FPGA_ZYNQMPPL) += zynqmppl.o
+obj-$(CONFIG_FPGA_ADI_SELMAP) += adi_selmap.o
 obj-$(CONFIG_FPGA_XILINX) += xilinx.o
 obj-$(CONFIG_FPGA_LATTICE) += ivm_core.o lattice.o
 ifdef CONFIG_FPGA_ALTERA

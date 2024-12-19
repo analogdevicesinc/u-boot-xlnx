@@ -52,6 +52,15 @@ static xilinx_desc zynqmppl = {
 };
 #endif
 
+#if CONFIG_IS_ENABLED(FPGA) && defined(CONFIG_FPGA_ADI_SELMAP)
+extern struct xilinx_fpga_op adi_selmap_fpga_op;
+
+static xilinx_desc adi_selmap_fpga = {
+	xilinx_zynqmp, slave_selectmap, 1, &adi_selmap_fpga_op, 0, &adi_selmap_fpga_op, NULL,
+	FPGA_LEGACY
+};
+#endif
+
 int __maybe_unused psu_uboot_init(void)
 {
 	int ret;
@@ -184,6 +193,40 @@ int board_init(void)
 			fpga_add(fpga_xilinx, &zynqmppl);
 		}
 	}
+#endif
+
+#if CONFIG_IS_ENABLED(FPGA) && defined(CONFIG_FPGA_ADI_SELMAP)
+	/* get the adi-selmap driver information */
+	struct driver *adi_selmap_drv = DM_DRIVER_GET(adi_selmap);
+
+	if (adi_selmap_drv) {
+
+		struct udevice *adi_selmap_dev;
+	
+		/* if the driver adi-selmap was bound successfuly with a device
+		 * during binding, then we probe that device.
+		 */
+		ret = uclass_get_device_by_driver(UCLASS_MISC,
+						  adi_selmap_drv,
+						  &adi_selmap_dev);
+		if (ret >= 0) {
+			/* using custom name (not compatible with
+			 * xilinx bitstream ID)
+			 */
+			adi_selmap_fpga.name = "External FPGA - Select Map";
+			if (fpga_count() >= 0) {
+				fpga_add(fpga_xilinx, &adi_selmap_fpga);
+			} else {
+				fpga_init();
+				fpga_add(fpga_xilinx, &adi_selmap_fpga);
+			}
+		} else {
+			printf("Failed to probe adi-selmap driver\n");
+		}
+	} else {
+		printf("Driver adi-selmap not found\n");
+	}
+
 #endif
 
 	/* display secure boot information */
