@@ -10,6 +10,9 @@
 #ifndef __CONFIG_ZYNQ_COMMON_H
 #define __CONFIG_ZYNQ_COMMON_H
 
+/* Force legacy Ethernet (disable Device Model ETH) */
+#undef CONFIG_DM_ETH
+
 #define CONFIG_MISC_INIT_R
 /* CPU clock */
 #ifndef CONFIG_CPU_FREQ_HZ
@@ -114,6 +117,9 @@
 #ifdef CONFIG_USB_EHCI_ZYNQ
 # define CONFIG_EHCI_IS_TDI
 # define CONFIG_USB_MAX_CONTROLLER_COUNT	2
+
+# define CONFIG_USB_HOST_ETHER
+# define CONFIG_USB_ETHER_RTL8152
 
 # define CONFIG_SYS_DFU_DATA_BUF_SIZE	0x600000
 # define DFU_DEFAULT_POLL_TIMEOUT	300
