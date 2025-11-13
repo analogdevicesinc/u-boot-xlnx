@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       vivado_version:
-        description: 'Vivado version that will be used for download xilinx versal'
+        description: 'Vivado version'
         required: true
         default: '2023.2'
       x32_defconfigs:
@@ -24,7 +24,7 @@ permissions:
 
 env: 
   GCC_BASE_FOLDER: /usr/bin
-  LINARO_FOLDER: /opt/linaro
+  CUSTOM_GCC_FOLDER: /opt/custom-gcc
   uboot_checkout: u-boot-xlnx
   ARTIFACTS_NAME: u-boot-artifacts
   CLOUDSMITH_NAMESPACE: adi
@@ -35,13 +35,17 @@ jobs:
     steps:
       - name: Install GCC 
         run: |
-          wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
-          sudo mkdir -p ${{env.LINARO_FOLDER}}
-          sudo tar -xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz -C /opt/linaro
+          wget https://developer.arm.com/-/media/Files/downloads/gnu-a/8.2-2018.08/gcc-arm-8.2-2018.08-x86_64-arm-linux-gnueabihf.tar.xz
+          sudo mkdir -p ${{env.CUSTOM_GCC_FOLDER}}
+          sudo tar -xf gcc-arm-8.2-2018.08-x86_64-arm-linux-gnueabihf.tar.xz -C ${{env.CUSTOM_GCC_FOLDER}}
           
           sudo apt update
           sudo apt install -y gcc-aarch64-linux-gnu
-          
+      - name: Install dependencies
+        run: |
+          sudo apt install -y uuid-dev 
+          sudo apt install -y libgnutls28-dev 
+          sudo apt install -y device-tree-compiler
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -55,13 +59,12 @@ jobs:
       - name: Run 32 bit configurations
         working-directory: ${{env.uboot_checkout}}
         env:
-          GCC_LINARO_FOLDER: ${{env.LINARO_FOLDER}}//gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin
+          GCC_CUSTOM_GCC_FOLDER: ${{env.CUSTOM_GCC_FOLDER}}/gcc-arm-8.2-2018.08-x86_64-arm-linux-gnueabihf/bin
           ARCH: arm
           X32_DEFCONFIGS: "${{ inputs.x32_defconfigs }}"
         run: |
-          export CROSS_COMPILE=${{env.GCC_LINARO_FOLDER}}/arm-linux-gnueabihf-
+          export CROSS_COMPILE=${{env.GCC_CUSTOM_GCC_FOLDER}}/arm-linux-gnueabihf-
           export ARCH=${{env.ARCH}}
-
           for defcfg in ${{env.X32_DEFCONFIGS}}; do
              make distclean
              make $defcfg
@@ -69,13 +72,6 @@ jobs:
              echo -e "$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf"
              cp u-boot "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
           done
-
-      - name: Install dependencies
-        run: |
-          sudo apt install uuid-dev
-          sudo apt install libgnutls28-dev 
-          sudo apt install device-tree-compiler
-
       - name: Run 64 bit configurations
         working-directory: ${{env.uboot_checkout}}
         env:
@@ -88,10 +84,9 @@ jobs:
           defcfg=adi_zynqmp_adrv9009_zu11eg_adrv2crr_fmc_defconfig
           make distclean
           make $defcfg
-          make -j2
+          make
           echo -e "$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf"
           cp u-boot "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
-
           defcfg=xilinx_zynqmp_zcu102_revA_defconfig
           make distclean
           make $defcfg
@@ -99,10 +94,9 @@ jobs:
           echo -e "\n$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf\n"
           cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
 
-          #build of special cases of kria, jupiter and versal (new flow)
+          # k26 dts build
           git fetch
           git checkout adi_k26_smk_dts_wrapper
-          
           export DEVICE_TREE="zynqmp-smk-k26-revA-wrapper"
           make distclean
           make xilinx_zynqmp_virt_defconfig
@@ -110,8 +104,8 @@ jobs:
           echo -e "\nxilinx_zynqmp_virt_defconfig done. Output file is: u-boot_${DEVICE_TREE}.elf\n"
           cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${DEVICE_TREE}.elf"
 
+          # jupiter sdr build
           git checkout jupiter-sdr
-          
           export DEVICE_TREE="zynqmp-jupiter-sdr"
           make distclean
           make xilinx_zynqmp_virt_defconfig
@@ -124,8 +118,7 @@ jobs:
           name: ${{env.ARTIFACTS_NAME}}
           path: ${{env.ARTIFACTS_NAME}}/*
           if-no-files-found: error
-      
-
+    
   upload_artifacts:
     permissions:
       id-token: write
@@ -138,7 +131,6 @@ jobs:
       - name: Clean-up artifacts
         run: |
           rm -rf ${{env.ARTIFACTS_NAME}}
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -155,7 +147,6 @@ jobs:
           echo "Files to be uploaded to boot_partition_files/uboot/$folder_version :" 
           ls ${{env.ARTIFACTS_NAME}}
           scp -2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o HostKeyAlgorithms=+ssh-dss -v -i secure_file -r ${{env.ARTIFACTS_NAME}}/* sshacs@analog.ssh.upload.akamai.com:/336936/cse/boot_partition_files/uboot/$folder_version
-
       - uses: cloudsmith-io/cloudsmith-cli-action@v1.0.5
         env:
           CLOUDSMITH_SERVICE_SLUG: ${{ secrets.CLOUDSMITH_SERVICE_SLUG }}
