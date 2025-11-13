@@ -50,7 +50,6 @@ jobs:
           path: ${{env.uboot_checkout}}
       - name: Create artifacts folder
         run: |
-          rm -rf ${{env.ARTIFACTS_NAME}}
           mkdir -p ${{env.ARTIFACTS_NAME}}
       
       - name: Run 32 bit configurations
@@ -66,7 +65,7 @@ jobs:
           for defcfg in ${{env.X32_DEFCONFIGS}}; do
              make distclean
              make $defcfg
-             make -j2
+             make
              echo -e "$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf"
              cp u-boot "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
           done
@@ -96,7 +95,7 @@ jobs:
           defcfg=xilinx_zynqmp_zcu102_revA_defconfig
           make distclean
           make $defcfg
-          make -j2
+          make
           echo -e "\n$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf\n"
           cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
 
@@ -107,7 +106,7 @@ jobs:
           export DEVICE_TREE="zynqmp-smk-k26-revA-wrapper"
           make distclean
           make xilinx_zynqmp_virt_defconfig
-          make -j2
+          make
           echo -e "\nxilinx_zynqmp_virt_defconfig done. Output file is: u-boot_${DEVICE_TREE}.elf\n"
           cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${DEVICE_TREE}.elf"
 
@@ -116,7 +115,7 @@ jobs:
           export DEVICE_TREE="zynqmp-jupiter-sdr"
           make distclean
           make xilinx_zynqmp_virt_defconfig
-          make -j2
+          make
           echo -e "\nxilinx_zynqmp_virt_defconfig done. Output file is: u-boot_${DEVICE_TREE}.elf\n"
           cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${DEVICE_TREE}.elf"
       - name: Upload artifacts
