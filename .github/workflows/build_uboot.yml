@@ -1,0 +1,191 @@
+name: Build U-Boot for Xilinx Platforms
+# This workflow builds U-Boot for various Xilinx platforms.
+
+on:
+  workflow_dispatch:
+    inputs:
+      vivado_version:
+        description: 'Vivado version that will be used for download xilinx versal'
+        required: true
+        default: '2023.2'
+      x32_defconfigs:
+        description: '32-bit configurations to build'
+        required: true
+        default: 'zynq_zc702_defconfig zynq_zc706_defconfig zynq_zed_defconfig zynq_picozed_defconfig zynq_coraz7_defconfig zynq_adrv9361_defconfig'
+      export_on_server:
+        description: 'Export on server'
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: write
+  actions: read
+
+env: 
+  GCC_BASE_FOLDER: /usr/bin
+  LINARO_FOLDER: /opt/linaro
+  uboot_checkout: u-boot-xlnx
+  ARTIFACTS_NAME: u-boot-artifacts
+  CLOUDSMITH_NAMESPACE: adi
+
+jobs:
+  build-uboot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GCC 
+        run: |
+          wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
+          sudo mkdir -p ${{env.LINARO_FOLDER}}
+          sudo tar -xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz -C /opt/linaro
+          
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu
+          
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: analogdevicesinc/u-boot-xlnx
+          ref: master
+          path: ${{env.uboot_checkout}}
+      - name: Create artifacts folder
+        run: |
+          rm -rf ${{env.ARTIFACTS_NAME}}
+          mkdir -p ${{env.ARTIFACTS_NAME}}
+      
+      - name: Run 32 bit configurations
+        working-directory: ${{env.uboot_checkout}}
+        env:
+          GCC_LINARO_FOLDER: ${{env.LINARO_FOLDER}}//gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin
+          ARCH: arm
+          X32_DEFCONFIGS: "${{ inputs.x32_defconfigs }}"
+        run: |
+          export CROSS_COMPILE=${{env.GCC_LINARO_FOLDER}}/arm-linux-gnueabihf-
+          export ARCH=${{env.ARCH}}
+
+          for defcfg in ${{env.X32_DEFCONFIGS}}; do
+             make distclean
+             make $defcfg
+             make -j2
+             echo -e "$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf"
+             cp u-boot "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
+          done
+
+      - name: Install dependencies
+        run: |
+          sudo apt install uuid-dev
+          sudo apt install libgnutls28-dev 
+          sudo apt install device-tree-compiler
+
+      - name: Run 64 bit configurations
+        working-directory: ${{env.uboot_checkout}}
+        env:
+          ARCH: aarch64
+        run: |
+          # build of 64 bit configurations
+          export CROSS_COMPILE=${{env.GCC_BASE_FOLDER}}/aarch64-linux-gnu-
+          export ARCH=${{env.ARCH}}
+          
+          defcfg=adi_zynqmp_adrv9009_zu11eg_adrv2crr_fmc_defconfig
+          make distclean
+          make $defcfg
+          make -j2
+          echo -e "$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf"
+          cp u-boot "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
+
+          defcfg=xilinx_zynqmp_zcu102_revA_defconfig
+          make distclean
+          make $defcfg
+          make -j2
+          echo -e "\n$defcfg done. Output file is: u-boot_${defcfg//_defconfig/}.elf\n"
+          cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${defcfg//_defconfig/}.elf"
+
+          #build of special cases of kria, jupiter and versal (new flow)
+          git fetch
+          git checkout adi_k26_smk_dts_wrapper
+          
+          export DEVICE_TREE="zynqmp-smk-k26-revA-wrapper"
+          make distclean
+          make xilinx_zynqmp_virt_defconfig
+          make -j2
+          echo -e "\nxilinx_zynqmp_virt_defconfig done. Output file is: u-boot_${DEVICE_TREE}.elf\n"
+          cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${DEVICE_TREE}.elf"
+
+          git checkout jupiter-sdr
+          
+          export DEVICE_TREE="zynqmp-jupiter-sdr"
+          make distclean
+          make xilinx_zynqmp_virt_defconfig
+          make -j2
+          echo -e "\nxilinx_zynqmp_virt_defconfig done. Output file is: u-boot_${DEVICE_TREE}.elf\n"
+          cp u-boot.elf "../${{env.ARTIFACTS_NAME}}/u-boot_${DEVICE_TREE}.elf"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{env.ARTIFACTS_NAME}}
+          path: ${{env.ARTIFACTS_NAME}}/*
+          if-no-files-found: error
+      
+
+  upload_artifacts:
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    runs-on: ubuntu-latest
+    needs: build-uboot
+    if: ${{ inputs.export_on_server }}
+    steps: 
+      - name: Clean-up artifacts
+        run: |
+          rm -rf ${{env.ARTIFACTS_NAME}}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{env.ARTIFACTS_NAME}}
+          path: ${{github.workspace}}/${{env.ARTIFACTS_NAME}}
+
+      - name: SwDownlaod upload
+        env:
+          VIVADO_VERSION: ${{inputs.vivado_version}}
+        run: |
+          folder_version=${VIVADO_VERSION//./_r}
+          echo "${{secrets.RSA}}" >secure_file
+          chmod 600 secure_file
+          echo "Files to be uploaded to boot_partition_files/uboot/$folder_version :" 
+          ls ${{env.ARTIFACTS_NAME}}
+          scp -2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o HostKeyAlgorithms=+ssh-dss -v -i secure_file -r ${{env.ARTIFACTS_NAME}}/* sshacs@analog.ssh.upload.akamai.com:/336936/cse/boot_partition_files/uboot/$folder_version
+
+      - uses: cloudsmith-io/cloudsmith-cli-action@v1.0.5
+        env:
+          CLOUDSMITH_SERVICE_SLUG: ${{ secrets.CLOUDSMITH_SERVICE_SLUG }}
+        if: ${{ env.CLOUDSMITH_SERVICE_SLUG != '' }}
+        with:
+          oidc-namespace: ${{ env.CLOUDSMITH_NAMESPACE }}
+          oidc-service-slug: ${{ secrets.CLOUDSMITH_SERVICE_SLUG }}
+          oidc-auth-only: 'true'
+
+      - name: Cloudsmith API Key
+        env:
+          CLOUDSMITH_SERVICE_SLUG: ${{ secrets.CLOUDSMITH_SERVICE_SLUG }}
+        if: ${{ env.CLOUDSMITH_SERVICE_SLUG == '' }}
+        run: echo "CLOUDSMITH_API_KEY=${{ secrets.CLOUDSMITH_API_KEY }}" >> "$GITHUB_ENV"
+
+      - name: Cloudsmith upload assets
+        if: ${{ env.CLOUDSMITH_API_KEY != '' }}
+        env: 
+          CLOUDSMITH_REPOSITORY: u-boot
+          VIVADO_VERSION: ${{inputs.vivado_version}}
+        run: |
+          python -m pip install cloudsmith-cli
+          vivado_version=${VIVADO_VERSION//./_r}
+          cd ${{env.ARTIFACTS_NAME}}
+          for f in u-boot_*.elf; do 
+            mv "$f" "${f/u-boot/u-boot_$vivado_version}"
+          done
+          
+          for file in * ; do
+            echo "Upload: $file"
+            cloudsmith push raw --republish -k ${{env.CLOUDSMITH_API_KEY}} adi/${{env.CLOUDSMITH_REPOSITORY}} $file;
+          done
