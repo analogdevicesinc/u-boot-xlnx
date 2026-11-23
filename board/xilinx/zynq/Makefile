@@ -7,6 +7,13 @@
 
 obj-y	:= board.o
 
+ifndef CONFIG_SPL_BUILD
+obj-$(CONFIG_ZYNQ_FWSLOT) += fwslot.o
+endif
+
+CFLAGS_fwslot.o := -I$(srctree)/lib/abrecord \
+		   -DABR_PORT_INCLUDE='<abr_port_uboot.h>'
+
 hw-platform-y :=$(shell echo $(CONFIG_DEFAULT_DEVICE_TREE))
 
 init-objs := $(if $(wildcard $(srctree)/$(src)/$(hw-platform-y)/ps7_init_gpl.c),\

@@ -190,6 +190,10 @@ void zynq_slcr_cpu_reset(void)
 	 */
 	clrbits_le32(&slcr_base->reboot_status, 0xF000000);
 
+	/* Restart through the boot selector, not the slot booted last */
+	if (IS_ENABLED(CONFIG_ZYNQ_FWSLOT))
+		writel(0, &devcfg_base->multiboot_addr);
+
 	writel(1, &slcr_base->pss_rst_ctrl);
 }
 

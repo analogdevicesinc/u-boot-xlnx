@@ -45,4 +45,14 @@ config ZYNQ_BOOT_WATCHDOG_TIMEOUT
 	  Time the operating system has, from the start of its boot, before
 	  the system watchdog resets the board unless serviced.
 
+config ZYNQ_FWSLOT
+	bool "A/B firmware slots in QSPI flash"
+	depends on DM_SPI_FLASH && FIT
+	select ABRECORD
+	help
+	  Boot one of two firmware slots in QSPI flash, chosen by a boot
+	  selector that names the slot in the devcfg MULTIBOOT_ADDR register.
+	  Provides the "fwslot" command to load the slot's FIT image and to
+	  decide whether a reset lets the selector fall back to the other slot.
+
 endif
