@@ -35,6 +35,12 @@ static int dfu_write_medium_sf(struct dfu_entity *dfu,
 {
 	int ret;
 
+	if (offset + *len > dfu->data.sf.size) {
+		printf("%s: %s: data exceeds the alt setting size 0x%llx\n",
+		       __func__, dfu->name, dfu->data.sf.size);
+		return -EFBIG;
+	}
+
 	ret = spi_flash_erase(dfu->data.sf.dev,
 			      find_sector(dfu, dfu->data.sf.start, offset),
 			      dfu->data.sf.dev->sector_size);
