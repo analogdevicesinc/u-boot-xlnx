@@ -52,6 +52,13 @@ config LIB_RAND
 	help
 	  This library provides pseudo-random number generator functions.
 
+config ABRECORD
+	bool
+	help
+	  Read-only part of the A/B boot record library in lib/abrecord:
+	  validation of the boot record kept by an A/B boot selector, its
+	  boot journal, and the selector's choice of slot.
+
 source lib/dhry/Kconfig
 
 source lib/rsa/Kconfig

@@ -17,6 +17,7 @@ obj-$(CONFIG_TIZEN) += tizen/
 obj-$(CONFIG_FIT) += libfdt/
 obj-$(CONFIG_CMD_DHRYSTONE) += dhry/
 
+obj-$(CONFIG_ABRECORD) += abrecord/abr_core.o abrecord/abr_status.o
 obj-$(CONFIG_AES) += aes.o
 obj-$(CONFIG_USB_TTY) += circbuf.o
 obj-y += crc7.o
@@ -63,6 +64,8 @@ obj-y += hashtable.o
 obj-y += errno.o
 obj-y += display_options.o
 CFLAGS_display_options.o := $(if $(BUILD_TAG),-DBUILD_TAG='"$(BUILD_TAG)"')
+CFLAGS_abr_core.o := -DABR_PORT_INCLUDE='<abr_port_uboot.h>'
+CFLAGS_abr_status.o := -DABR_PORT_INCLUDE='<abr_port_uboot.h>'
 obj-$(CONFIG_BCH) += bch.o
 obj-y += crc32.o
 obj-y += ctype.o
