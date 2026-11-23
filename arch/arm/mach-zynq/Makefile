@@ -16,3 +16,7 @@ obj-y	+= clk.o
 obj-y	+= lowlevel_init.o
 AFLAGS_lowlevel_init.o := -mfpu=neon
 obj-$(CONFIG_SPL_BUILD)	+= spl.o
+
+ifndef CONFIG_SPL_BUILD
+obj-$(CONFIG_ZYNQ_BOOT_WATCHDOG) += swdt.o
+endif
