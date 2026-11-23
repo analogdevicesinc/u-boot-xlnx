@@ -42,6 +42,15 @@ config SPI_FLASH_BAR
 	  Bank/Extended address registers are used to access the flash
 	  which has size > 16MiB in 3-byte addressing.
 
+config SPI_FLASH_4B_OPCODES
+	bool "Use 4-byte address opcodes on flash larger than 16MiB"
+	depends on SPI_FLASH_BAR
+	help
+	  On a single flash larger than 16MiB, erase (0xDC) and program (0x12)
+	  with 4-byte address opcodes and read above 16MiB with the 4-byte
+	  address fast read (0x0C), so the Bank/Extended address register is
+	  never written. Reads below 16MiB keep the 3-byte address opcode.
+
 if SPI_FLASH
 
 config SPI_FLASH_ATMEL
