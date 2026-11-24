@@ -36,6 +36,13 @@ static void spi_flash_addr(u32 addr, u8 *cmd, u8 four_byte)
 	}
 }
 
+static bool spi_flash_addr_4b(struct spi_flash *flash)
+{
+	return flash->spi->bytemode == SPI_4BYTE_MODE ||
+	       (IS_ENABLED(CONFIG_SPI_FLASH_4B_OPCODES) &&
+		(flash->flags & SNOR_F_4B_OPCODES));
+}
+
 /* Read commands array */
 static u8 spi_read_cmds_array[] = {
 	CMD_READ_ARRAY_SLOW,
@@ -454,7 +461,7 @@ int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 			bank_addr = erase_addr;
 #endif
 
-		if (flash->spi->bytemode != SPI_4BYTE_MODE) {
+		if (!spi_flash_addr_4b(flash)) {
 #ifdef CONFIG_SPI_FLASH_BAR
 			ret = spi_flash_write_bar(flash, bank_addr);
 			if (ret < 0)
@@ -519,7 +526,7 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 			bank_addr = write_addr;
 #endif
 
-		if (flash->spi->bytemode != SPI_4BYTE_MODE) {
+		if (!spi_flash_addr_4b(flash)) {
 #ifdef CONFIG_SPI_FLASH_BAR
 			ret = spi_flash_write_bar(flash, bank_addr);
 			if (ret < 0)
@@ -534,7 +541,7 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 			chunk_len = min(chunk_len,
 					(size_t)flash->spi->max_write_size);
 
-		if (flash->spi->bytemode == SPI_4BYTE_MODE) {
+		if (spi_flash_addr_4b(flash)) {
 			spi_flash_addr(write_addr, cmd, 1);
 			cmdlen = SPI_FLASH_CMD_LEN + 1;
 		} else {
@@ -590,6 +597,53 @@ void __weak spi_flash_copy_mmap(void *data, void *offset, size_t len)
 	memcpy(data, offset, len);
 }
 
+#ifdef CONFIG_SPI_FLASH_4B_OPCODES
+/*
+ * Read below 16MiB with the 3-byte address read opcode while bank 0 is
+ * selected, and everything else with the 4-byte address fast read.
+ */
+static int spi_flash_read_4b(struct spi_flash *flash, u32 offset,
+			     size_t len, void *data)
+{
+	size_t read_len, buf_len;
+	u8 *cmd, cmdsz;
+	int ret = 0;
+
+	buf_len = max(SPI_FLASH_CMD_LEN + flash->dummy_byte,
+		      SPI_FLASH_READ_4B_CMD_LEN);
+	cmd = malloc(buf_len);
+	if (!cmd)
+		return -ENOMEM;
+
+	while (len) {
+		memset(cmd, 0, buf_len);
+		if (offset < SPI_FLASH_16MB_BOUN && !flash->bank_curr) {
+			read_len = min_t(size_t, len,
+					 SPI_FLASH_16MB_BOUN - offset);
+			cmd[0] = flash->read_cmd;
+			spi_flash_addr(offset, cmd, 0);
+			cmdsz = SPI_FLASH_CMD_LEN + flash->dummy_byte;
+		} else {
+			read_len = len;
+			cmd[0] = CMD_READ_ARRAY_FAST_4B;
+			spi_flash_addr(offset, cmd, 1);
+			cmdsz = SPI_FLASH_READ_4B_CMD_LEN;
+		}
+
+		ret = spi_flash_read_common(flash, cmd, cmdsz, data, read_len);
+		if (ret < 0)
+			break;
+
+		offset += read_len;
+		len -= read_len;
+		data += read_len;
+	}
+
+	free(cmd);
+	return ret;
+}
+#endif
+
 int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
@@ -611,6 +665,11 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 		spi_release_bus(flash->spi);
 		return 0;
 	}
+
+#ifdef CONFIG_SPI_FLASH_4B_OPCODES
+	if (flash->flags & SNOR_F_4B_OPCODES)
+		return spi_flash_read_4b(flash, offset, len, data);
+#endif
 
 	cmdsz = SPI_FLASH_CMD_LEN + flash->dummy_byte;
 
@@ -1541,6 +1600,17 @@ int spi_flash_scan(struct spi_flash *flash)
 		break;
 	default:
 		flash->dummy_byte = 1;
+	}
+
+	if (IS_ENABLED(CONFIG_SPI_FLASH_4B_OPCODES) &&
+	    flash->dual_flash == SF_SINGLE_FLASH &&
+	    flash->spi->bytemode != SPI_4BYTE_MODE &&
+	    flash->size > SPI_FLASH_16MB_BOUN) {
+		flash->flags |= SNOR_F_4B_OPCODES;
+		flash->erase_cmd = CMD_ERASE_64K_4B;
+		flash->erase_size = params->sector_size;
+		flash->sector_size = flash->erase_size;
+		flash->write_cmd = CMD_PAGE_PROGRAM_4B;
 	}
 
 #ifdef CONFIG_SPI_FLASH_STMICRO

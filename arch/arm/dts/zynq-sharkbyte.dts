@@ -48,9 +48,13 @@
 		spi-max-frequency = <50000000>;
 		#address-cells = <1>;
 		#size-cells = <1>;
-		partition@qspi-fsbl-uboot {
-			label = "qspi-fsbl-uboot";
-			reg = <0x0 0x100000>; /* 1M */
+		partition@qspi-golden {
+			label = "qspi-golden";
+			reg = <0x0 0x40000>; /* 256k */
+		};
+		partition@qspi-bootrec {
+			label = "qspi-bootrec";
+			reg = <0x40000 0x20000>; /* 128k */
 		};
 		partition@qspi-uboot-env {
 			label = "qspi-uboot-env";
@@ -60,9 +64,21 @@
 			label = "qspi-nvmfs";
 			reg = <0x120000 0xE0000>; /* 1M */
 		};
-		partition@qspi-linux {
-			label = "qspi-linux";
-			reg = <0x200000 0x1E00000>; /* 30M */
+		partition@qspi-boot-a {
+			label = "qspi-boot-a";
+			reg = <0x200000 0x100000>; /* 1M */
+		};
+		partition@qspi-boot-b {
+			label = "qspi-boot-b";
+			reg = <0x300000 0x100000>; /* 1M */
+		};
+		partition@qspi-app-a {
+			label = "qspi-app-a";
+			reg = <0x400000 0x1C00000>; /* 28M */
+		};
+		partition@qspi-app-b {
+			label = "qspi-app-b";
+			reg = <0x2000000 0x1C00000>; /* 28M */
 		};
 	};
 };

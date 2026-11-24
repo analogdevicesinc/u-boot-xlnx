@@ -9,6 +9,7 @@
 
 #define ZYNQ_SYS_CTRL_BASEADDR		0xF8000000
 #define ZYNQ_DEV_CFG_APB_BASEADDR	0xF8007000
+#define ZYNQ_SWDT_BASEADDR		0xF8005000
 #define ZYNQ_SCU_BASEADDR		0xF8F00000
 #define ZYNQ_GEM_BASEADDR0		0xE000B000
 #define ZYNQ_GEM_BASEADDR1		0xE000C000
@@ -75,7 +76,9 @@ struct slcr_regs {
 	u32 reserved3[5];
 	u32 reboot_status; /* 0x258 */
 	u32 boot_mode; /* 0x25c */
-	u32 reserved4[116];
+	u32 reserved4_1[41];
+	u32 wdt_clk_sel; /* 0x304 */
+	u32 reserved4_2[74];
 	u32 trust_zone; /* 0x430 */ /* FIXME */
 	u32 reserved5_1[63];
 	u32 pss_idcode; /* 0x530 */
@@ -105,7 +108,8 @@ struct devcfg_regs {
 	u32 dma_src_len; /* 0x20 */
 	u32 dma_dst_len; /* 0x24 */
 	u32 rom_shadow; /* 0x28 */
-	u32 reserved1[2];
+	u32 multiboot_addr; /* 0x2c */
+	u32 reserved1;
 	u32 unlock; /* 0x34 */
 	u32 reserved2[18];
 	u32 mctrl; /* 0x80 */
@@ -115,6 +119,15 @@ struct devcfg_regs {
 };
 
 #define devcfg_base ((struct devcfg_regs *)ZYNQ_DEV_CFG_APB_BASEADDR)
+
+struct swdt_regs {
+	u32 zmr; /* 0x0 */
+	u32 ccr; /* 0x4 */
+	u32 restart; /* 0x8 */
+	u32 status; /* 0xc */
+};
+
+#define swdt_base ((struct swdt_regs *)ZYNQ_SWDT_BASEADDR)
 
 struct scu_regs {
 	u32 reserved1[16];

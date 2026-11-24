@@ -105,6 +105,9 @@ int board_late_init(void)
 	else
 		setenv("modeboot", modes[mode]);
 
+	if (IS_ENABLED(CONFIG_ZYNQ_FWSLOT))
+		zynq_fwslot_init();
+
 	return 0;
 }
 
